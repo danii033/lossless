@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Lossless Login</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f7f7f7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      .card {
+        background: white;
+        padding: 24px;
+        border-radius: 16px;
+        width: 320px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        text-align: center;
+      }
+
+      h2 {
+        margin-top: 0;
+        margin-bottom: 6px;
+      }
+
+      p {
+        font-size: 13px;
+        opacity: 0.7;
+        margin-bottom: 16px;
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        border-radius: 14px;
+        border: 0;
+        background: black;
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="card">
+      <h2>Lossless</h2>
+      <p>Log in to share what you are listening to</p>
+      <button id="loginBtn">Login with Google</button>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+      import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyD4HpKMkJwAFtIvst2XaEMa3L3oNnjfAoA",
+        authDomain: "loess-eecf3.firebaseapp.com",
+        projectId: "loess-eecf3",
+        storageBucket: "loess-eecf3.firebasestorage.app",
+        messagingSenderId: "582613352242",
+        appId: "1:582613352242:web:d0d46c4c40e982124da12b",
+        measurementId: "G-D2PTX2XYCN"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const provider = new GoogleAuthProvider();
+
+      document.getElementById("loginBtn").addEventListener("click", async () => {
+
+try {
+  const result = await signInWithPopup(auth, provider)
+  const user = result.user
+
+  const userPayload = {
+    uid: user.uid,
+    displayName: user.displayName || "",
+    email: user.email || ""
+  }
+
+  const params = new URLSearchParams(window.location.search)
+  const extId = params.get("extId")
+
+  if (!extId) {
+    alert("Missing extId in URL")
+    return
+  }
+
+  chrome.runtime.sendMessage(
+    extId,
+    { type: "LOSSLESS_LOGIN", user: userPayload },
+    () => {
+      if (chrome.runtime.lastError) {
+        alert("Could not connect to extension\n" + chrome.runtime.lastError.message)
+        return
+      }
+      window.close()
+    }
+  )
+} catch (err) {
+  alert((err?.code || "no code") + "\n" + (err?.message || "no message"))
+  console.error(err)
+}
+
+      });
+    </script>
+  </body>
+</html>
