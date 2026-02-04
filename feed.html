@@ -1,0 +1,194 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Lossless Feed</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f7f7f7;
+      }
+
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 18px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .brandBlock {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .logo {
+        height: 36px;
+        width: auto;
+        display: block;
+        margin-left: -40px;
+      }
+
+      .subtitle {
+        font-size: 15px;
+        font-weight: 700;
+        margin-top: 2px;
+        opacity: 0.7;
+        margin-right: -8px;
+      }
+
+      .emptyState {
+        background: white;
+        border-radius: 16px;
+        padding: 18px;
+        text-align: center;
+        opacity: 0.7;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      }
+
+      .card {
+        background: white;
+        width: 100%;
+        border-radius: 16px;
+        padding: 14px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        margin-bottom: 12px;
+
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 40px rgba(0,0,0,0.12);
+      }
+
+      .topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+
+      .user {
+        font-size: 12px;
+        font-weight: 700;
+        opacity: 0.85;
+      }
+
+      .time {
+        font-size: 12px;
+        opacity: 0.6;
+        white-space: nowrap;
+      }
+
+      .track {
+        font-size: 14px;
+        font-weight: 800;
+        margin-bottom: 6px;
+      }
+
+      .meta {
+        font-size: 12px;
+        opacity: 0.8;
+        margin-bottom: 10px;
+      }
+
+      .link {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        color: black;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        padding: 8px 10px;
+        border-radius: 12px;
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .pill {
+        font-size: 11px;
+        opacity: 0.7;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        padding: 6px 10px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+
+      /* ADDED: actions row for Open link + Delete */
+      .actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      /* ADDED: delete button styling */
+      .deleteBtn {
+        background: white;
+        color: black;
+        border: 1px solid rgba(0,0,0,0.12);
+        border-radius: 12px;
+        padding: 8px 10px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .deleteBtn:hover {
+        transform: scale(1.03);
+      }
+
+      #status {
+        font-size: 12px;
+        opacity: 0.7;
+        margin-top: 10px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-weight: 700;
+        cursor: pointer;
+        background: black;
+        color: white;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <div class="brandBlock">
+          <img src="losslesslogo.png" alt="Lossless logo" class="logo" />
+          <div class="subtitle">Your feed</div>
+        </div>
+        
+        <button id="loginBtn" style="display:none;">Log in</button>
+        <button id="refreshBtn">Refresh</button>
+      </div>
+
+      <div id="emptyState" class="emptyState" style="display:none;">
+        No posts yet. Share a track to get started.
+      </div>
+
+      <div id="list"></div>
+      <div id="status"></div>
+    </div>
+
+    <script src="feed.js"></script>
+  </body>
+</html>

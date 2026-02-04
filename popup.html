@@ -102,12 +102,45 @@
         transform: scale(1.02);
       }
 
+      #feedBtn {
+        width: 100%;
+        padding: 11px;
+        border-radius: 14px;
+        border: 1px solid rgba(0,0,0,0.14);
+        background: white;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+
+      #feedBtn:hover {
+        transform: scale(1.02);
+      }
 
       #status {
         margin-top: 10px;
         font-size: 11px;
         opacity: 0.7;
       }
+
+      #logoutBtn {
+        background: transparent;
+        color: rgb(255, 0, 0);
+        border: 1px solid rgba(0,0,0,0.15);
+        width: 100%;
+        padding: 11px;
+        border-radius: 14px;
+        border: 1px solid rgba(0,0,0,0.14);
+        background: white;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+
+      #logoutBtn:hover {
+        transform: scale(1.02);
+      }
+
     </style>
   </head>
 
@@ -126,6 +159,10 @@
 
       <button id="shareBtn" disabled>Share</button>
       <button id="loginBtn">Login</button>
+      <button id="feedBtn">View feed</button>
+      <button id="logoutBtn" style="display:none;">Sign out</button>
+
+
 
       <div id="status"></div>
     </div>

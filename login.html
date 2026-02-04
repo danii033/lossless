@@ -79,6 +79,11 @@ try {
   const result = await signInWithPopup(auth, provider)
   const user = result.user
 
+  localStorage.setItem("lossless_uid", user.uid)
+  localStorage.setItem("lossless_name", user.displayName || "")
+
+  alert("Logged in as " + user.displayName)
+
   const userPayload = {
     uid: user.uid,
     displayName: user.displayName || "",

@@ -4,6 +4,20 @@ const serviceEl = document.getElementById("service")
 const statusEl = document.getElementById("status")
 const shareBtn = document.getElementById("shareBtn")
 const loginBtn = document.getElementById("loginBtn")
+const feedBtn = document.getElementById("feedBtn")
+const logoutBtn = document.getElementById("logoutBtn")
+
+async function updateAuthUI() {
+    const { losslessUser } = await chrome.storage.local.get({ losslessUser: null })
+  
+    if (losslessUser) {
+      logoutBtn.style.display = "block"
+      loginBtn.style.display = "none"
+    } else {
+      logoutBtn.style.display = "none"
+      loginBtn.style.display = "block"
+    }
+  }  
 
 let currentSharePayload = null
 
@@ -197,5 +211,26 @@ loginBtn.addEventListener("click", () => {
       }
     )
   })
+
+  feedBtn.addEventListener("click", () => {
+    chrome.tabs.create({ url: "http://127.0.0.1:5500/feed.html" })
+  })
+
+
+logoutBtn.addEventListener("click", () => {
+    const ok = confirm("Sign out of Lossless?")
+    if (!ok) return
+  
+    chrome.storage.local.remove("losslessUser", () => {
+      setStatus("Signed out")
+      setShareEnabled(false)
+      logoutBtn.style.display = "none"
+    })
+  })
+  
+  
+  
+
+updateAuthUI()
 
 refreshPreview()

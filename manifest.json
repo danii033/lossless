@@ -11,6 +11,7 @@
     "host_permissions": [
       "https://music.apple.com/*",
       "https://music.youtube.com/*",
+      "https://firestore.googleapis.com/*",
       "https://www.youtube.com/*"
     ],
     "externally_connectable": {
