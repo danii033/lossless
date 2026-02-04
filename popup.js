@@ -79,7 +79,10 @@ async function refreshPreview() {
 
 shareBtn.addEventListener("click", () => {
   if (!currentSharePayload) return
-  chrome.runtime.sendMessage({ type: "LOSSLESS_SHARE", payload: currentSharePayload })
+  chrome.runtime.sendMessage({
+    type: "LOSSLESS_SHARE",
+    payload: currentSharePayload
+  })
 })
 
 loginBtn.addEventListener("click", () => {
