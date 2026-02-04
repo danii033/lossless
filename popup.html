@@ -17,6 +17,7 @@
       }
 
       #brand {
+        font-size: 16px;
         font-weight: 700;
         margin-bottom: 2px;
       }
@@ -27,13 +28,30 @@
         margin-bottom: 10px;
       }
 
-      #userBadge {
-        font-size: 11px;
-        background: #f0f0f0;
-        padding: 6px 8px;
-        border-radius: 8px;
-        margin-bottom: 10px;
+      #userBlock {
         display: none;
+        margin-bottom: 10px;
+      }
+
+      #userBadge {
+        font-size: 12px;
+        font-weight: 700;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #f2f2f2;
+        text-align: center;
+        margin-bottom: 6px;
+      }
+
+      #resetBtn {
+        width: 100%;
+        padding: 7px;
+        border-radius: 10px;
+        border: 1px solid rgba(0,0,0,0.2);
+        background: white;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
       }
 
       #card {
@@ -44,13 +62,20 @@
       }
 
       #track {
+        font-size: 14px;
         font-weight: 700;
         margin-bottom: 6px;
       }
 
       #artist {
         font-size: 12px;
-        opacity: 0.8;
+        opacity: 0.85;
+        margin-bottom: 6px;
+      }
+
+      #service {
+        font-size: 11px;
+        opacity: 0.6;
       }
 
       button {
@@ -60,7 +85,6 @@
         border: 0;
         font-weight: 700;
         cursor: pointer;
-        margin-top: 10px;
       }
 
       #shareBtn {
@@ -68,16 +92,23 @@
         color: white;
       }
 
+      #shareBtn:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
+
       #loginBtn,
       #feedBtn {
-        border: 1px solid rgba(0,0,0,0.14);
         background: white;
+        border: 1px solid rgba(0,0,0,0.14);
+        margin-top: 10px;
       }
 
       #status {
+        margin-top: 10px;
         font-size: 11px;
         opacity: 0.7;
-        margin-top: 10px;
+        text-align: center;
       }
     </style>
   </head>
@@ -87,17 +118,20 @@
       <div id="brand">Lossless</div>
       <div id="sub">Track preview</div>
 
-      <div id="userBadge"></div>
+      <div id="userBlock">
+        <div id="userBadge"></div>
+        <button id="resetBtn">Reset login</button>
+      </div>
 
       <div id="card">
         <div id="track">Open a track page</div>
         <div id="artist"></div>
+        <div id="service"></div>
       </div>
 
       <button id="shareBtn" disabled>Share</button>
-      <button id="feedBtn">View feed</button>
       <button id="loginBtn">Login</button>
-
+      <button id="feedBtn">View feed</button>
 
       <div id="status"></div>
     </div>

@@ -1,36 +1,62 @@
 const trackEl = document.getElementById("track")
 const artistEl = document.getElementById("artist")
+const serviceEl = document.getElementById("service")
 const statusEl = document.getElementById("status")
 const shareBtn = document.getElementById("shareBtn")
 const loginBtn = document.getElementById("loginBtn")
 const feedBtn = document.getElementById("feedBtn")
+const userBlock = document.getElementById("userBlock")
 const userBadge = document.getElementById("userBadge")
+const resetBtn = document.getElementById("resetBtn")
 
-let currentPayload = null
+let currentSharePayload = null
 
 function setStatus(t) {
   statusEl.textContent = t || ""
 }
 
-async function getUser() {
-  const data = await chrome.storage.local.get({ losslessUser: null })
-  return data.losslessUser
+function setShareEnabled(v) {
+  shareBtn.disabled = !v
 }
 
-async function extractTrack(tabId) {
+async function getLoggedInUser() {
+  const { losslessUser } = await chrome.storage.local.get({ losslessUser: null })
+  return losslessUser
+}
+
+async function refreshAuthUI() {
+  const user = await getLoggedInUser()
+
+  if (!user) {
+    userBlock.style.display = "none"
+    setShareEnabled(false)
+    setStatus("Not logged in")
+    return
+  }
+
+  userBadge.textContent = `Logged in as: ${user.displayName || "User"}`
+  userBlock.style.display = "block"
+  setStatus("")
+}
+
+async function getActiveTab() {
+  const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
+  return tabs[0]
+}
+
+async function extractFromTab(tabId) {
   const [{ result }] = await chrome.scripting.executeScript({
     target: { tabId },
     func: () => {
-      const ogTitle =
-        document.querySelector('meta[property="og:title"]')?.content || ""
-      const ogDesc =
-        document.querySelector('meta[property="og:description"]')?.content || ""
+      const norm = (t) => (t || "").replace(/\s+/g, " ").trim()
+      const ogTitle = document.querySelector('meta[property="og:title"]')?.content || ""
+      const ogDesc = document.querySelector('meta[property="og:description"]')?.content || ""
 
       return {
         url: location.href,
-        track: ogTitle,
-        artist: ogDesc,
-        service: "YouTube"
+        service: location.host.includes("youtube") ? "YouTube" : "Unknown",
+        track: norm(ogTitle),
+        artist: norm(ogDesc)
       }
     }
   })
@@ -38,61 +64,59 @@ async function extractTrack(tabId) {
   return result
 }
 
-async function refresh() {
-  setStatus("")
-  shareBtn.disabled = true
+async function refreshPreview() {
+  const user = await getLoggedInUser()
+  if (!user) return
 
-  const user = await getUser()
-
-  if (user) {
-    userBadge.style.display = "block"
-    userBadge.textContent = `Logged in as: ${user.displayName || user.email}`
-  } else {
-    userBadge.style.display = "none"
-  }
-
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  const tab = await getActiveTab()
   if (!tab?.id) return
 
-  const data = await extractTrack(tab.id)
-  if (!data.track) {
-    setStatus("No track detected")
-    return
-  }
+  const extracted = await extractFromTab(tab.id)
+  if (!extracted.track) return
 
-  trackEl.textContent = data.track
-  artistEl.textContent = data.artist
+  trackEl.textContent = extracted.track
+  artistEl.textContent = extracted.artist
+  serviceEl.textContent = extracted.service
 
-  if (!user) {
-    setStatus("Login to share")
-    return
-  }
-
-  currentPayload = { ...data, user }
-  shareBtn.disabled = false
+  currentSharePayload = { ...extracted, user }
+  setShareEnabled(true)
 }
 
 shareBtn.addEventListener("click", () => {
-  if (!currentPayload) return
+  if (!currentSharePayload) return
   chrome.runtime.sendMessage({
     type: "LOSSLESS_SHARE",
-    payload: currentPayload
+    payload: currentSharePayload
   })
   setStatus("Shared")
 })
 
 loginBtn.addEventListener("click", () => {
   const extId = chrome.runtime.id
-  window.open(
-    `http://127.0.0.1:5500/login.html?extId=${extId}`,
-    "_blank"
-  )
+  window.open(`http://127.0.0.1:5500/login.html?extId=${extId}`, "_blank")
 })
 
 feedBtn.addEventListener("click", () => {
-  chrome.tabs.create({
-    url: "http://127.0.0.1:5500/feed.html"
-  })
+  chrome.tabs.create({ url: "http://127.0.0.1:5500/feed.html" })
 })
 
-refresh()
+resetBtn.addEventListener("click", async () => {
+  const ok = confirm("Reset login and require sign in again?")
+  if (!ok) return
+
+  await chrome.storage.local.remove("losslessUser")
+
+  userBadge.textContent = ""
+  userBlock.style.display = "none"
+  setShareEnabled(false)
+  setStatus("Login reset. Please log in again.")
+})
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local") return
+  if (!changes.losslessUser) return
+  refreshAuthUI()
+})
+
+refreshAuthUI()
+refreshPreview()
