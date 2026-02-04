@@ -2,38 +2,56 @@ const listEl = document.getElementById("list")
 const statusEl = document.getElementById("status")
 const refreshBtn = document.getElementById("refreshBtn")
 const emptyEl = document.getElementById("emptyState")
-const MY_UID = localStorage.getItem("lossless_uid") || ""
 const loginBtn = document.getElementById("loginBtn")
+const logoutBtn = document.getElementById("logoutBtn")
 const subtitleEl = document.querySelector(".subtitle")
-const listWrapper = document.getElementById("list")
-
 
 const PROJECT_ID = "loess-eecf3"
 const API_KEY = "AIzaSyD4HpKMkJwAFtIvst2XaEMa3L3oNnjfAoA"
 
-if (loginBtn) {
-    if (!MY_UID) {
-      loginBtn.style.display = "inline-block"
-    }
-  
-    loginBtn.addEventListener("click", () => {
-      const EXT_ID = chrome.runtime?.id
-      if (!EXT_ID) {
-        alert("Extension ID not found")
-        return
-      }
-  
-      const url = `login.html?extId=${EXT_ID}`
-      window.open(url, "_blank")
-    })
-  }
+let MY_UID = localStorage.getItem("lossless_uid") || ""
+
+/* ---------- AUTH UI ---------- */
 
 if (!MY_UID) {
+  subtitleEl.textContent = "Log in to share and delete posts"
+  refreshBtn.style.display = "none"
+  if (logoutBtn) logoutBtn.style.display = "none"
+  if (loginBtn) loginBtn.style.display = "inline-block"
+} else {
+  subtitleEl.textContent = "Your feed"
+  refreshBtn.style.display = "inline-block"
+  if (logoutBtn) logoutBtn.style.display = "inline-block"
+  if (loginBtn) loginBtn.style.display = "none"
+}
+
+if (loginBtn) {
+  loginBtn.addEventListener("click", () => {
+    const EXT_ID = chrome.runtime?.id
+    const url = `login.html?extId=${EXT_ID}`
+    window.open(url, "_blank")
+  })
+}
+
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", () => {
+    const ok = confirm("Log out of Lossless?")
+    if (!ok) return
+
+    localStorage.removeItem("lossless_uid")
+    MY_UID = ""
+
+    listEl.innerHTML = ""
+    if (emptyEl) emptyEl.style.display = "none"
+    refreshBtn.style.display = "none"
+    logoutBtn.style.display = "none"
+    if (loginBtn) loginBtn.style.display = "inline-block"
     subtitleEl.textContent = "Log in to share and delete posts"
-  } else {
-    subtitleEl.textContent = "Your feed"
-  }
-  
+    statusEl.textContent = ""
+  })
+}
+
+/* ---------- HELPERS ---------- */
 
 function setStatus(t) {
   statusEl.textContent = t || ""
@@ -72,6 +90,8 @@ function parseDoc(doc) {
   }
 }
 
+/* ---------- FIRESTORE ---------- */
+
 async function fetchPosts() {
   const endpoint =
     `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/posts?key=${API_KEY}`
@@ -83,108 +103,77 @@ async function fetchPosts() {
   const docs = Array.isArray(json.documents) ? json.documents : []
   const posts = docs.map(parseDoc)
 
-  posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
   return posts
 }
 
-/* ADDED: delete helper */
 async function deletePostByName(docName) {
   const endpoint = `https://firestore.googleapis.com/v1/${docName}?key=${API_KEY}`
-
   const res = await fetch(endpoint, { method: "DELETE" })
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "")
-    throw new Error("Delete failed " + txt)
-  }
+  if (!res.ok) throw new Error("Delete failed")
 }
+
+/* ---------- RENDER ---------- */
 
 function render(posts) {
   if (!posts.length) {
     listEl.innerHTML = ""
-
-    /* ADDED: empty state support */
     if (emptyEl) emptyEl.style.display = "block"
-
-    setStatus("")
     return
   }
 
-  /* ADDED: hide empty state */
   if (emptyEl) emptyEl.style.display = "none"
 
-  setStatus("")
-  listEl.innerHTML = posts
-    .map((p) => {
-      const canDelete = MY_UID && p.userId === MY_UID
-      const userLabel = p.userName || p.userId || "Unknown user"
-      const time = prettyTime(p.createdAt)
-      const track = escapeHtml(p.track)
-      const artist = escapeHtml(p.artist)
-      const service = escapeHtml(p.service)
-      const url = p.url || "#"
+  listEl.innerHTML = posts.map((p) => {
+    const canDelete = MY_UID && p.userId === MY_UID
 
-      /* ADDED: only show delete for your own posts */
-      const deleteBtnHtml = canDelete
-        ? `<button class="deleteBtn" data-doc="${escapeHtml(p.id)}">Delete</button>`
-        : ""
-
-      return `
-        <div class="card">
-          <div class="topline">
-            <div class="user">${escapeHtml(userLabel)}</div>
-            <div class="time">${escapeHtml(time)}</div>
-          </div>
-
-          <div class="track">${track}</div>
-          <div class="row">
-            <div class="meta">${artist ? artist : ""}</div>
-            <div class="pill">${service}</div>
-          </div>
-
-          <div class="actions">
-            <a class="link" href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Open link</a>
-            ${deleteBtnHtml}
-          </div>
+    return `
+      <div class="card">
+        <div class="topline">
+          <div class="user">${escapeHtml(p.userName || "User")}</div>
+          <div class="time">${escapeHtml(prettyTime(p.createdAt))}</div>
         </div>
-      `
-    })
-    .join("")
+
+        <div class="track">${escapeHtml(p.track)}</div>
+        <div class="row">
+          <div class="meta">${escapeHtml(p.artist)}</div>
+          <div class="pill">${escapeHtml(p.service)}</div>
+        </div>
+
+        <div class="actions">
+          <a class="link" href="${escapeHtml(p.url)}" target="_blank">Open link</a>
+          ${canDelete ? `<button class="deleteBtn" data-doc="${escapeHtml(p.id)}">Delete</button>` : ""}
+        </div>
+      </div>
+    `
+  }).join("")
 }
 
+/* ---------- LOAD ---------- */
+
 async function load() {
+  if (!MY_UID) return
+
   try {
     setStatus("Loading…")
     const posts = await fetchPosts()
     render(posts)
+    setStatus("")
   } catch (e) {
     console.error(e)
-    setStatus("Could not load feed. Make sure Firestore is enabled and in test mode for dev.")
+    setStatus("Could not load feed")
   }
 }
 
 refreshBtn.addEventListener("click", load)
 
-/* ADDED: click handler for delete buttons */
 listEl.addEventListener("click", async (e) => {
   const btn = e.target.closest(".deleteBtn")
   if (!btn) return
-
-  const docName = btn.getAttribute("data-doc")
-  if (!docName) return
-
-  const ok = confirm("Delete this post?")
-  if (!ok) return
-
-  try {
-    setStatus("Deleting…")
-    await deletePostByName(docName)
-    await load()
-  } catch (err) {
-    console.error(err)
-    setStatus(String(err?.message || err))
-  }
+  if (!confirm("Delete this post?")) return
+  await deletePostByName(btn.dataset.doc)
+  load()
 })
 
 load()
-
 setInterval(load, 10000)

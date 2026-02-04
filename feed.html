@@ -45,6 +45,11 @@
         margin-right: -8px;
       }
 
+      .topActions {
+        display: flex;
+        gap: 8px;
+      }
+
       .emptyState {
         background: white;
         border-radius: 16px;
@@ -61,7 +66,6 @@
         padding: 14px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         margin-bottom: 12px;
-
         transition: transform 0.15s ease, box-shadow 0.15s ease;
       }
 
@@ -128,7 +132,6 @@
         white-space: nowrap;
       }
 
-      /* ADDED: actions row for Open link + Delete */
       .actions {
         margin-top: 10px;
         display: flex;
@@ -136,7 +139,6 @@
         align-items: center;
       }
 
-      /* ADDED: delete button styling */
       .deleteBtn {
         background: white;
         color: black;
@@ -166,6 +168,17 @@
         background: black;
         color: white;
       }
+
+      /* ADDED: logout button styling */
+      #logoutBtn {
+        background: white;
+        color: red;
+        border: 1px solid rgba(0,0,0,0.15);
+      }
+
+      #logoutBtn:hover {
+        background: #ffecec;
+      }
     </style>
   </head>
 
@@ -176,9 +189,11 @@
           <img src="losslesslogo.png" alt="Lossless logo" class="logo" />
           <div class="subtitle">Your feed</div>
         </div>
-        
-        <button id="loginBtn" style="display:none;">Log in</button>
-        <button id="refreshBtn">Refresh</button>
+
+        <div class="topActions">
+          <button id="refreshBtn">Refresh</button>
+          <button id="logoutBtn">Log out</button>
+        </div>
       </div>
 
       <div id="emptyState" class="emptyState" style="display:none;">
