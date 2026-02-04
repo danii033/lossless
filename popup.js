@@ -45,24 +45,100 @@ async function getActiveTab() {
 }
 
 async function extractFromTab(tabId) {
-  const [{ result }] = await chrome.scripting.executeScript({
-    target: { tabId },
-    func: () => {
-      const norm = (t) => (t || "").replace(/\s+/g, " ").trim()
-      const ogTitle = document.querySelector('meta[property="og:title"]')?.content || ""
-      const ogDesc = document.querySelector('meta[property="og:description"]')?.content || ""
-
-      return {
-        url: location.href,
-        service: location.host.includes("youtube") ? "YouTube" : "Unknown",
-        track: norm(ogTitle),
-        artist: norm(ogDesc)
+    const [{ result }] = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        const norm = (t) => (t || "").replace(/\s+/g, " ").trim()
+  
+        const url = location.href
+        const host = location.host
+  
+        const ogTitle =
+          document.querySelector('meta[property="og:title"]')?.content || ""
+        const ogDesc =
+          document.querySelector('meta[property="og:description"]')?.content || ""
+  
+        const data = {
+          url,
+          service: "Unknown",
+          track: "",
+          artist: ""
+        }
+  
+        // YOUTUBE MUSIC
+        if (host.includes("music.youtube.com")) {
+          const t1 =
+            document.querySelector("ytmusic-player-bar .title")?.textContent
+          const a1 =
+            document.querySelector("ytmusic-player-bar .byline")?.textContent
+  
+          data.service = "YouTube Music"
+          data.track = norm(t1) || norm(ogTitle)
+  
+          if (a1) {
+            data.artist = norm(a1.split("•")[0])
+          } else {
+            data.artist = norm(ogDesc)
+          }
+        }
+  
+        // YOUTUBE
+        else if (host.includes("youtube.com")) {
+          data.service = "YouTube"
+  
+          const title =
+            norm(document.querySelector("h1.ytd-watch-metadata")?.textContent) ||
+            norm(ogTitle)
+  
+          const channel =
+            norm(document.querySelector("#channel-name #text")?.textContent) || ""
+  
+          data.track = title
+          data.artist = channel
+        }
+  
+        // APPLE MUSIC
+        else if (host.includes("music.apple.com")) {
+          data.service = "Apple Music"
+          data.track = norm(ogTitle)
+  
+          if (ogDesc.includes("·")) {
+            data.artist = norm(ogDesc.split("·")[1])
+          } else {
+            data.artist = norm(ogDesc)
+          }
+        }
+  
+        // SPOTIFY  
+        else if (host.includes("open.spotify.com")) {
+          data.service = "Spotify"
+  
+          const title = document.title || ""
+  
+          // Spotify tab title format: "Song · Artist"
+          if (title.includes("·")) {
+            const parts = title.split("·")
+            data.track = parts[0]?.trim() || ""
+            data.artist = parts[1]?.trim() || ""
+          } else {
+            data.track = title.trim()
+            data.artist = ""
+          }
+        }
+  
+        // FALLBACK
+        else {
+          data.track = norm(ogTitle)
+          data.artist = norm(ogDesc)
+        }
+  
+        return data
       }
-    }
-  })
-
-  return result
-}
+    })
+  
+    return result
+  }
+  
 
 async function refreshPreview() {
   const user = await getLoggedInUser()
