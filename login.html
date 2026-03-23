@@ -24,10 +24,7 @@
         text-align: center;
       }
 
-      h2 {
-        margin-top: 0;
-        margin-bottom: 6px;
-      }
+      h2 { margin-top: 0; margin-bottom: 6px; }
 
       p {
         font-size: 13px;
@@ -45,6 +42,12 @@
         font-weight: 700;
         cursor: pointer;
       }
+
+      #msg {
+        margin-top: 12px;
+        font-size: 12px;
+        opacity: 0.7;
+      }
     </style>
   </head>
 
@@ -53,63 +56,10 @@
       <h2>Lossless</h2>
       <p>Log in to share what you are listening to</p>
       <button id="loginBtn">Login with Google</button>
+      <div id="msg"></div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js"
-        import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js"
-      
-        const firebaseConfig = {
-          apiKey: "AIzaSyD4HpKMkJwAFtIvst2XaEMa3L3oNnjfAoA",
-          authDomain: "loess-eecf3.firebaseapp.com",
-          projectId: "loess-eecf3",
-          storageBucket: "loess-eecf3.firebasestorage.app",
-          messagingSenderId: "582613352242",
-          appId: "1:582613352242:web:d0d46c4c40e982124da12b"
-        }
-      
-        const app = initializeApp(firebaseConfig)
-        const auth = getAuth(app)
-        const provider = new GoogleAuthProvider()
-      
-        document.getElementById("loginBtn").addEventListener("click", async () => {
-          try {
-            const result = await signInWithPopup(auth, provider)
-            const user = result.user
-      
-            const payload = {
-              uid: user.uid,
-              displayName: user.displayName || "",
-              email: user.email || ""
-            }
-      
-            //always store locally (feed uses this)
-            localStorage.setItem("lossless_uid", payload.uid)
-            localStorage.setItem("lossless_name", payload.displayName)
-      
-            //send to extension IF extId exists
-            const params = new URLSearchParams(window.location.search)
-            const extId = params.get("extId")
-      
-            if (extId) {
-              chrome.runtime.sendMessage(
-                extId,
-                { type: "LOSSLESS_LOGIN", user: payload },
-                () => {
-                  window.close()
-                }
-              )
-            } else {
-              // opened from feed page
-              alert("Logged in as " + payload.displayName)
-              window.close()
-            }
-          } catch (err) {
-            alert(err.message || "Login failed")
-            console.error(err)
-          }
-        })
-      </script>
-      
+    <!-- No inline scripts allowed in MV3 — logic lives in login.js -->
+    <script src="login.js" type="module"></script>
   </body>
 </html>

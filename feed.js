@@ -1,55 +1,93 @@
-const listEl = document.getElementById("list")
-const statusEl = document.getElementById("status")
-const refreshBtn = document.getElementById("refreshBtn")
-const emptyEl = document.getElementById("emptyState")
-const loginBtn = document.getElementById("loginBtn")
-const logoutBtn = document.getElementById("logoutBtn")
-const subtitleEl = document.querySelector(".subtitle")
+const listEl      = document.getElementById("list")
+const statusEl    = document.getElementById("status")
+const refreshBtn  = document.getElementById("refreshBtn")
+const emptyEl     = document.getElementById("emptyState")
+const loginBtn    = document.getElementById("loginBtn")
+const logoutBtn   = document.getElementById("logoutBtn")
+const subtitleEl  = document.querySelector(".subtitle")
 
 const PROJECT_ID = "loess-eecf3"
-const API_KEY = "AIzaSyD4HpKMkJwAFtIvst2XaEMa3L3oNnjfAoA"
+const API_KEY    = "AIzaSyD4HpKMkJwAFtIvst2XaEMa3L3oNnjfAoA"
 
-let MY_UID = localStorage.getItem("lossless_uid") || ""
+// -------------------------------------------------------------------------
+// MY_USER holds the full user object (uid, displayName).
+// We read it from chrome.storage.local — the same place login.html writes it.
+// This works regardless of which machine or extension ID is in use.
+// -------------------------------------------------------------------------
+let MY_USER = null
+let MY_UID  = ""
+
+/* ---------- INIT ---------- */
+
+// Load the user from storage, then set up the UI and start fetching posts.
+async function init() {
+  const { losslessUser } = await chrome.storage.local.get({ losslessUser: null })
+
+  MY_USER = losslessUser || null
+  MY_UID  = MY_USER?.uid || ""
+
+  applyAuthUI()
+
+  if (MY_UID) load()
+}
 
 /* ---------- AUTH UI ---------- */
 
-if (!MY_UID) {
-  subtitleEl.textContent = "Log in to share and delete posts"
-  refreshBtn.style.display = "none"
-  if (logoutBtn) logoutBtn.style.display = "none"
-  if (loginBtn) loginBtn.style.display = "inline-block"
-} else {
-  subtitleEl.textContent = "Your feed"
-  refreshBtn.style.display = "inline-block"
-  if (logoutBtn) logoutBtn.style.display = "inline-block"
-  if (loginBtn) loginBtn.style.display = "none"
+function applyAuthUI() {
+  if (!MY_UID) {
+    subtitleEl.textContent       = "Log in to share and delete posts"
+    refreshBtn.style.display     = "none"
+    if (logoutBtn) logoutBtn.style.display = "none"
+    if (loginBtn)  loginBtn.style.display  = "inline-block"
+  } else {
+    subtitleEl.textContent       = "Your feed"
+    refreshBtn.style.display     = "inline-block"
+    if (logoutBtn) logoutBtn.style.display = "inline-block"
+    if (loginBtn)  loginBtn.style.display  = "none"
+  }
 }
 
 if (loginBtn) {
   loginBtn.addEventListener("click", () => {
-    const EXT_ID = chrome.runtime?.id
-    const url = `login.html?extId=${EXT_ID}`
-    window.open(url, "_blank")
+    // Open login.html from inside the extension — works on any machine
+    const loginUrl = chrome.runtime.getURL("login.html")
+    window.open(loginUrl, "_blank")
   })
 }
 
 if (logoutBtn) {
-  logoutBtn.addEventListener("click", () => {
+  logoutBtn.addEventListener("click", async () => {
     const ok = confirm("Log out of Lossless?")
     if (!ok) return
 
-    localStorage.removeItem("lossless_uid")
-    MY_UID = ""
+    // Clear storage
+    await chrome.storage.local.remove("losslessUser")
+    MY_USER = null
+    MY_UID  = ""
 
+    // Reset UI
     listEl.innerHTML = ""
     if (emptyEl) emptyEl.style.display = "none"
     refreshBtn.style.display = "none"
-    logoutBtn.style.display = "none"
+    logoutBtn.style.display  = "none"
     if (loginBtn) loginBtn.style.display = "inline-block"
     subtitleEl.textContent = "Log in to share and delete posts"
-    statusEl.textContent = ""
+    statusEl.textContent   = ""
   })
 }
+
+// Listen for storage changes — if the user logs in from another tab,
+// this page updates automatically without needing a manual refresh.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local")      return
+  if (!changes.losslessUser) return
+
+  MY_USER = changes.losslessUser.newValue || null
+  MY_UID  = MY_USER?.uid || ""
+
+  applyAuthUI()
+  if (MY_UID) load()
+})
 
 /* ---------- HELPERS ---------- */
 
@@ -59,10 +97,10 @@ function setStatus(t) {
 
 function escapeHtml(s) {
   return (s || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
+    .replaceAll("&",  "&amp;")
+    .replaceAll("<",  "&lt;")
+    .replaceAll(">",  "&gt;")
+    .replaceAll('"',  "&quot;")
     .replaceAll("'", "&#039;")
 }
 
@@ -74,18 +112,18 @@ function prettyTime(iso) {
 }
 
 function parseDoc(doc) {
-  const f = doc.fields || {}
-  const getStr = (k) => f?.[k]?.stringValue || ""
-  const getTs = (k) => f?.[k]?.timestampValue || ""
+  const f      = doc.fields || {}
+  const getStr = (k) => f?.[k]?.stringValue  || ""
+  const getTs  = (k) => f?.[k]?.timestampValue || ""
 
   return {
-    id: doc.name || "",
-    userName: getStr("userName"),
-    userId: getStr("userId"),
-    track: getStr("track"),
-    artist: getStr("artist"),
-    service: getStr("service"),
-    url: getStr("url"),
+    id:        doc.name || "",
+    userName:  getStr("userName"),
+    userId:    getStr("userId"),
+    track:     getStr("track"),
+    artist:    getStr("artist"),
+    service:   getStr("service"),
+    url:       getStr("url"),
     createdAt: getTs("createdAt")
   }
 }
@@ -100,7 +138,7 @@ async function fetchPosts() {
   if (!res.ok) throw new Error("Failed to load feed")
 
   const json = await res.json()
-  const docs = Array.isArray(json.documents) ? json.documents : []
+  const docs  = Array.isArray(json.documents) ? json.documents : []
   const posts = docs.map(parseDoc)
 
   posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -175,5 +213,7 @@ listEl.addEventListener("click", async (e) => {
   load()
 })
 
-load()
 setInterval(load, 10000)
+
+// Kick everything off
+init()

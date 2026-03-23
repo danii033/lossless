@@ -1,24 +1,46 @@
 {
-    "manifest_version": 3,
-    "name": "Lossless",
-    "version": "0.2.0",
-    "description": "Share tracks to Lossless.",
-    "action": {
-      "default_title": "Lossless",
-      "default_popup": "popup.html"
-    },
-    "permissions": ["storage", "activeTab", "tabs", "scripting"],
-    "host_permissions": [
-      "https://music.apple.com/*",
-      "https://music.youtube.com/*",
-      "https://firestore.googleapis.com/*",
-      "https://www.youtube.com/*"
-    ],
-    "externally_connectable": {
-      "matches": ["http://127.0.0.1:*/*", "http://localhost:*/*"]
-    },
-    "background": {
-      "service_worker": "background.js"
+  "manifest_version": 3,
+  "name": "Lossless",
+  "version": "0.2.0",
+  "description": "Share tracks to Lossless.",
+  "action": {
+    "default_title": "Lossless",
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs",
+    "scripting",
+    "identity"
+  ],
+  "oauth2": {
+    "client_id": "582613352242-l9f6nuvc3p9l0v2d64djn0qambruivk0.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  },
+  "host_permissions": [
+    "https://music.apple.com/*",
+    "https://music.youtube.com/*",
+    "https://firestore.googleapis.com/*",
+    "https://www.googleapis.com/*",
+    "https://accounts.google.com/*",
+    "https://www.youtube.com/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "login.html",
+        "login.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
+  ],
+  "background": {
+    "service_worker": "background.js"
   }
-  
+}
