@@ -3,36 +3,36 @@
   <head>
     <meta charset="utf-8" />
     <title>Lossless</title>
-
+ 
     <style>
       body {
         margin: 0;
         font-family: Arial, sans-serif;
       }
-
+ 
       #wrap {
         width: 320px;
         padding: 14px;
         box-sizing: border-box;
       }
-
+ 
       #brand {
         font-size: 16px;
         font-weight: 700;
         margin-bottom: 2px;
       }
-
+ 
       #sub {
         font-size: 12px;
         opacity: 0.7;
         margin-bottom: 10px;
       }
-
+ 
       #userBlock {
         display: none;
         margin-bottom: 10px;
       }
-
+ 
       #userBadge {
         font-size: 12px;
         font-weight: 700;
@@ -42,7 +42,7 @@
         text-align: center;
         margin-bottom: 6px;
       }
-
+ 
       #resetBtn {
         width: 100%;
         padding: 7px;
@@ -52,33 +52,32 @@
         font-size: 11px;
         font-weight: 700;
         cursor: pointer;
-        color: red;
       }
-
+ 
       #card {
         border: 1px solid rgba(0,0,0,0.12);
         border-radius: 12px;
         padding: 12px;
         margin-bottom: 12px;
       }
-
+ 
       #track {
         font-size: 14px;
         font-weight: 700;
         margin-bottom: 6px;
       }
-
+ 
       #artist {
         font-size: 12px;
         opacity: 0.85;
         margin-bottom: 6px;
       }
-
+ 
       #service {
         font-size: 11px;
         opacity: 0.6;
       }
-
+ 
       button {
         width: 100%;
         padding: 11px;
@@ -87,24 +86,31 @@
         font-weight: 700;
         cursor: pointer;
       }
-
+ 
       #shareBtn {
         background: black;
         color: white;
       }
-
+ 
       #shareBtn:disabled {
         opacity: 0.6;
         cursor: default;
       }
-
+ 
       #loginBtn,
+      #logoutBtn,
       #feedBtn {
         background: white;
         border: 1px solid rgba(0,0,0,0.14);
         margin-top: 10px;
       }
-
+ 
+      /* Log out button is red */
+      #logoutBtn {
+        color: red;
+        border-color: rgba(255,0,0,0.25);
+      }
+ 
       #status {
         margin-top: 10px;
         font-size: 11px;
@@ -113,30 +119,32 @@
       }
     </style>
   </head>
-
+ 
   <body>
     <div id="wrap">
       <div id="brand">Lossless</div>
       <div id="sub">Track preview</div>
-
+ 
+      <!-- userBlock shown only when logged in -->
       <div id="userBlock">
         <div id="userBadge"></div>
-        <button id="resetBtn">Logout</button>
+        <button id="resetBtn">Switch account</button>
       </div>
-
+ 
       <div id="card">
         <div id="track">Open a track page</div>
         <div id="artist"></div>
         <div id="service"></div>
       </div>
-
+ 
       <button id="shareBtn" disabled>Share</button>
       <button id="loginBtn">Login</button>
+      <button id="logoutBtn" style="display:none;">Log out</button>
       <button id="feedBtn">View feed</button>
-
+ 
       <div id="status"></div>
     </div>
-
+ 
     <script src="popup.js"></script>
   </body>
 </html>
