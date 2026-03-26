@@ -3,6 +3,7 @@
   "name": "Lossless",
   "version": "0.2.0",
   "description": "Share tracks to Lossless.",
+  "key": "wXqzeGi7iTQZVd81egDAS9sikt3n1iFIKF0MHokRA08=",
   "action": {
     "default_title": "Lossless",
     "default_popup": "popup.html"
