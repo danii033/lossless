@@ -59,6 +59,7 @@
         box-shadow: 0 10px 30px rgba(0,0,0,0.08);
       }
 
+      /* ---------- POST CARD ---------- */
       .card {
         background: white;
         width: 100%;
@@ -66,12 +67,13 @@
         padding: 14px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         margin-bottom: 12px;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        box-sizing: border-box;
       }
 
-      .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 14px 40px rgba(0,0,0,0.12);
+      /* Emoji bar hidden by default, shown on card hover */
+      .card:hover .emojiBar {
+        opacity: 1;
+        pointer-events: all;
       }
 
       .topline {
@@ -147,11 +149,126 @@
         padding: 8px 10px;
         font-weight: 700;
         cursor: pointer;
+        font-size: 12px;
       }
 
-      .deleteBtn:hover {
-        transform: scale(1.03);
+      .deleteBtn:hover { transform: scale(1.03); }
+
+      /* ---------- EMOJI REACTION BAR ---------- */
+
+      .emojiBar {
+        display: flex;
+        gap: 2px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
       }
+
+      .emojiBtn {
+        background: none;
+        border: none;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 2px;
+        border-radius: 4px;
+        transition: transform 0.1s ease;
+        line-height: 1;
+      }
+
+      .emojiBtn:hover { transform: scale(1.3); }
+
+      /* ---------- REACTION COUNTS ---------- */
+
+      /* Shows below the actions row — only visible if there are reactions */
+      .reactionCounts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .reactionPill {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        background: #f2f2f2;
+        border-radius: 999px;
+        padding: 3px 10px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: background 0.1s;
+      }
+
+      /* Highlighted if the current user has reacted with this emoji */
+      .reactionPill.mine {
+        background: #e8f0fe;
+        border-color: #4285f4;
+      }
+
+      /* ---------- COMMENTS ---------- */
+
+      .commentsSection {
+        margin-top: 12px;
+        border-top: 1px solid rgba(0,0,0,0.06);
+        padding-top: 10px;
+      }
+
+      .commentList {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      .commentItem {
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .commentAuthor {
+        font-weight: 700;
+        margin-right: 4px;
+      }
+
+      .commentTime {
+        font-size: 11px;
+        opacity: 0.5;
+        margin-left: 6px;
+      }
+
+      .commentInputRow {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .commentInput {
+        flex: 1;
+        padding: 7px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(0,0,0,0.15);
+        font-size: 12px;
+        outline: none;
+        font-family: inherit;
+      }
+
+      .commentInput:focus {
+        border-color: rgba(0,0,0,0.3);
+      }
+
+      .commentSubmit {
+        padding: 7px 12px;
+        border-radius: 10px;
+        border: none;
+        background: black;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      /* ---------- GLOBAL BUTTONS ---------- */
 
       #status {
         font-size: 12px;
@@ -175,9 +292,7 @@
         border: 1px solid rgba(0,0,0,0.15);
       }
 
-      #logoutBtn:hover {
-        background: #ffecec;
-      }
+      #logoutBtn:hover { background: #ffecec; }
     </style>
   </head>
 
