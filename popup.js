@@ -12,6 +12,9 @@ const resetBtn  = document.getElementById("resetBtn")
  
 let currentSharePayload = null
  
+// Must match ADMIN_UID in feed.js
+const ADMIN_UID = "109116641420331267538"
+ 
 function setStatus(t) {
   statusEl.textContent = t || ""
 }
@@ -41,8 +44,14 @@ async function refreshAuthUI() {
   // Logged in: hide Login, show Log out and userBlock
   loginBtn.style.display  = "none"
   logoutBtn.style.display = "block"
-  userBadge.textContent   = `Logged in as: ${user.displayName || "User"}`
   userBlock.style.display = "block"
+ 
+  // Show admin badge if this is the admin account
+  const isAdmin = user.uid === ADMIN_UID
+  userBadge.innerHTML = `
+    Logged in as: ${user.displayName || "User"}
+    ${isAdmin ? '<span id="adminBadge">⚙️ Admin</span>' : ""}
+  `
   setStatus("")
 }
  
