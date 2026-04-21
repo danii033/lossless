@@ -9,11 +9,8 @@ const subtitleEl = document.querySelector(".subtitle")
 const PROJECT_ID = "loess-eecf3"
 const API_KEY    = "AIzaSyD4HpKMkJwAFtIvst2XaEMa3L3oNnjfAoA"
 
-// Admin uid — this user can delete any post
+// Admin uid — this user can delete any post and any comment
 const ADMIN_UID = "109116641420331267538"
-
-// The 6 emojis available for reactions
-const EMOJIS = ["❤️", "👍", "😂", "😛", "🔥", "☹️"]
 
 let MY_USER = null
 let MY_UID  = ""
@@ -96,8 +93,6 @@ function prettyTime(iso) {
   return d.toLocaleString()
 }
 
-// Extract the short document ID from the full Firestore path
-// e.g. "projects/x/databases/(default)/documents/posts/ABC123" → "ABC123"
 function docId(fullName) {
   return fullName.split("/").pop()
 }
@@ -138,62 +133,6 @@ async function deletePostByName(docName) {
   if (!res.ok) throw new Error("Delete failed")
 }
 
-/* ---------- FIRESTORE — REACTIONS ---------- */
-
-// Fetch all reactions for a post. Returns an object like:
-// { "❤️": ["uid1", "uid2"], "👍": ["uid3"] }
-async function fetchReactions(postId) {
-  const endpoint =
-    `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/posts/${postId}/reactions?key=${API_KEY}`
-  const res  = await fetch(endpoint)
-  if (!res.ok) return {}
-  const json = await res.json()
-  const docs = Array.isArray(json.documents) ? json.documents : []
-
-  const result = {}
-  for (const doc of docs) {
-    const uid   = docId(doc.name)
-    const emoji = doc.fields?.emoji?.stringValue
-    if (!emoji) continue
-    if (!result[emoji]) result[emoji] = []
-    result[emoji].push(uid)
-  }
-  return result
-}
-
-// Toggle a reaction — if the user already reacted with this emoji, remove it.
-// Otherwise write/overwrite their reaction document with the new emoji.
-async function toggleReaction(postId, emoji) {
-  const docPath = `projects/${PROJECT_ID}/databases/(default)/documents/posts/${postId}/reactions/${MY_UID}`
-  const getUrl  = `https://firestore.googleapis.com/v1/${docPath}?key=${API_KEY}`
-
-  // Check if user already has a reaction on this post
-  const existing = await fetch(getUrl)
-
-  if (existing.ok) {
-    const data         = await existing.json()
-    const currentEmoji = data.fields?.emoji?.stringValue
-
-    if (currentEmoji === emoji) {
-      // Same emoji — remove the reaction
-      await fetch(getUrl, { method: "DELETE" })
-      return
-    }
-  }
-
-  // Write or overwrite with the new emoji
-  await fetch(getUrl, {
-    method:  "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      fields: {
-        emoji:    { stringValue: emoji },
-        userName: { stringValue: MY_USER?.displayName || "" }
-      }
-    })
-  })
-}
-
 /* ---------- FIRESTORE — COMMENTS ---------- */
 
 async function fetchComments(postId) {
@@ -206,13 +145,20 @@ async function fetchComments(postId) {
 
   const comments = docs.map(doc => ({
     id:        doc.name,
-    userName:  doc.fields?.userName?.stringValue  || "User",
-    text:      doc.fields?.text?.stringValue      || "",
+    userName:  doc.fields?.userName?.stringValue     || "User",
+    userId:    doc.fields?.userId?.stringValue       || "",
+    text:      doc.fields?.text?.stringValue         || "",
     createdAt: doc.fields?.createdAt?.timestampValue || ""
   }))
 
   comments.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
   return comments
+}
+
+async function deleteComment(commentDocName) {
+  const endpoint = `https://firestore.googleapis.com/v1/${commentDocName}?key=${API_KEY}`
+  const res = await fetch(endpoint, { method: "DELETE" })
+  if (!res.ok) throw new Error("Comment delete failed")
 }
 
 async function submitComment(postId, text) {
@@ -243,15 +189,9 @@ function render(posts) {
 
   if (emptyEl) emptyEl.style.display = "none"
 
-  // Admin can delete any post; normal users only their own
   listEl.innerHTML = posts.map((p) => {
     const canDelete = MY_UID && (p.userId === MY_UID || MY_UID === ADMIN_UID)
     const pid       = docId(p.id)
-
-    // Build the emoji picker bar (hidden until card hover)
-    const emojiButtons = EMOJIS.map(e =>
-      `<button class="emojiBtn" data-post="${pid}" data-emoji="${e}">${e}</button>`
-    ).join("")
 
     return `
       <div class="card" id="card-${pid}">
@@ -272,16 +212,11 @@ function render(posts) {
           ${canDelete ? `<button class="deleteBtn" data-doc="${escapeHtml(p.id)}">Delete</button>` : ""}
         </div>
 
-        <!-- Reaction counts sit above comments -->
-        <div class="reactionCounts" id="reactions-${pid}"></div>
-
-        <!-- Comments section — emoji bar lives inside the input row -->
         <div class="commentsSection">
           <div class="commentList" id="comments-${pid}"></div>
           ${MY_UID ? `
             <div class="commentInputRow">
               <input class="commentInput" type="text" placeholder="Add a comment…" data-post="${pid}" />
-              <div class="emojiBar">${emojiButtons}</div>
               <button class="commentSubmit" data-post="${pid}">Post</button>
             </div>
           ` : ""}
@@ -291,34 +226,7 @@ function render(posts) {
     `
   }).join("")
 
-  // After rendering, load reactions and comments for each post
-  posts.forEach(p => {
-    const pid = docId(p.id)
-    loadReactions(pid)
-    loadComments(pid)
-  })
-}
-
-/* ---------- LOAD REACTIONS FOR ONE POST ---------- */
-
-async function loadReactions(postId) {
-  const container = document.getElementById(`reactions-${postId}`)
-  if (!container) return
-
-  const reactions = await fetchReactions(postId)
-
-  // Only show emojis that have at least one reaction
-  container.innerHTML = Object.entries(reactions)
-    .filter(([, uids]) => uids.length > 0)
-    .map(([emoji, uids]) => {
-      const iMine = MY_UID && uids.includes(MY_UID)
-      return `
-        <span class="reactionPill ${iMine ? "mine" : ""}"
-              data-post="${postId}" data-emoji="${emoji}">
-          ${emoji} ${uids.length}
-        </span>
-      `
-    }).join("")
+  posts.forEach(p => loadComments(docId(p.id)))
 }
 
 /* ---------- LOAD COMMENTS FOR ONE POST ---------- */
@@ -334,13 +242,17 @@ async function loadComments(postId) {
     return
   }
 
-  container.innerHTML = comments.map(c => `
-    <div class="commentItem">
-      <span class="commentAuthor">${escapeHtml(c.userName)}</span>
-      <span>${escapeHtml(c.text)}</span>
-      <span class="commentTime">${escapeHtml(prettyTime(c.createdAt))}</span>
-    </div>
-  `).join("")
+  container.innerHTML = comments.map(c => {
+    const canDeleteComment = MY_UID && (c.userId === MY_UID || MY_UID === ADMIN_UID)
+    return `
+      <div class="commentItem">
+        <span class="commentAuthor">${escapeHtml(c.userName)}</span>
+        <span>${escapeHtml(c.text)}</span>
+        <span class="commentTime">${escapeHtml(prettyTime(c.createdAt))}</span>
+        ${canDeleteComment ? `<button class="commentDeleteBtn" data-post="${postId}" data-comment="${escapeHtml(c.id)}">🗑️</button>` : ""}
+      </div>
+    `
+  }).join("")
 }
 
 /* ---------- LOAD ---------- */
@@ -373,27 +285,17 @@ listEl.addEventListener("click", async (e) => {
     return
   }
 
-  // Emoji button in the hover bar
-  const emojiBtn = e.target.closest(".emojiBtn")
-  if (emojiBtn && MY_UID) {
-    const postId = emojiBtn.dataset.post
-    const emoji  = emojiBtn.dataset.emoji
-    await toggleReaction(postId, emoji)
-    loadReactions(postId)
+  // Delete comment
+  const commentDeleteBtn = e.target.closest(".commentDeleteBtn")
+  if (commentDeleteBtn && MY_UID) {
+    const postId      = commentDeleteBtn.dataset.post
+    const commentName = commentDeleteBtn.dataset.comment
+    await deleteComment(commentName)
+    loadComments(postId)
     return
   }
 
-  // Reaction pill (clicking an existing reaction also toggles it)
-  const pill = e.target.closest(".reactionPill")
-  if (pill && MY_UID) {
-    const postId = pill.dataset.post
-    const emoji  = pill.dataset.emoji
-    await toggleReaction(postId, emoji)
-    loadReactions(postId)
-    return
-  }
-
-  // Comment submit button
+  // Submit comment via button
   const submitBtn = e.target.closest(".commentSubmit")
   if (submitBtn && MY_UID) {
     const postId = submitBtn.dataset.post
@@ -407,7 +309,7 @@ listEl.addEventListener("click", async (e) => {
   }
 })
 
-// Allow pressing Enter to submit a comment
+// Submit comment via Enter key
 listEl.addEventListener("keydown", async (e) => {
   if (e.key !== "Enter") return
   const input = e.target.closest(".commentInput")
@@ -420,6 +322,11 @@ listEl.addEventListener("keydown", async (e) => {
   loadComments(postId)
 })
 
-setInterval(load, 10000)
+// Pause auto-refresh while user is typing a comment
+let typingInComment = false
+document.addEventListener("focusin",  (e) => { if (e.target.classList.contains("commentInput")) typingInComment = true  })
+document.addEventListener("focusout", (e) => { if (e.target.classList.contains("commentInput")) typingInComment = false })
+
+setInterval(() => { if (!typingInComment) load() }, 10000)
 
 init()
