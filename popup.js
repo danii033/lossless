@@ -9,10 +9,9 @@ const feedBtn   = document.getElementById("feedBtn")
 const userBlock = document.getElementById("userBlock")
 const userBadge = document.getElementById("userBadge")
 const resetBtn  = document.getElementById("resetBtn")
- 
+const copyUidBtn = document.getElementById("copyUidBtn")
+
 let currentSharePayload = null
- 
-// Must match ADMIN_UID in feed.js
 const ADMIN_UID = "109116641420331267538"
  
 function setStatus(t) {
@@ -30,9 +29,8 @@ async function getLoggedInUser() {
  
 async function refreshAuthUI() {
   const user = await getLoggedInUser()
- 
+
   if (!user) {
-    // Not logged in: show Login, hide Log out and userBlock
     loginBtn.style.display  = "block"
     logoutBtn.style.display = "none"
     userBlock.style.display = "none"
@@ -40,18 +38,20 @@ async function refreshAuthUI() {
     setStatus("Not logged in")
     return
   }
- 
+
   // Logged in: hide Login, show Log out and userBlock
   loginBtn.style.display  = "none"
   logoutBtn.style.display = "block"
   userBlock.style.display = "block"
- 
-  // Show admin badge if this is the admin account
+
   const isAdmin = user.uid === ADMIN_UID
   userBadge.innerHTML = `
     Logged in as: ${user.displayName || "User"}
-    ${isAdmin ? '<span id="adminBadge">⚙️ Admin</span>' : ""}
+    ${isAdmin ? '<span id="adminBadge" style="display:inline-block;margin-left:6px;font-size:10px;font-weight:700;background:#fff3cd;color:#856404;border:1px solid #ffc107;border-radius:999px;padding:2px 7px;">⚙️ Admin</span>' : ""}
   `
+
+  // Store uid on the button so the click handler can read it
+  copyUidBtn.dataset.uid = user.uid
   setStatus("")
 }
  
@@ -149,6 +149,16 @@ shareBtn.addEventListener("click", () => {
   setStatus("Shared")
 })
  
+// Copy Friend Code (UID) to clipboard
+copyUidBtn.addEventListener("click", () => {
+  const uid = copyUidBtn.dataset.uid
+  if (!uid) return
+  navigator.clipboard.writeText(uid).then(() => {
+    copyUidBtn.textContent = "✅ Copied!"
+    setTimeout(() => { copyUidBtn.textContent = "📋 Copy my Friend Code" }, 2000)
+  })
+})
+
 // Show login page
 loginBtn.addEventListener("click", () => {
   chrome.tabs.create({ url: chrome.runtime.getURL("login.html") })

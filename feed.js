@@ -159,24 +159,25 @@ async function deletePostByName(docName) {
 
 /* ---------- FIRESTORE — USERS ---------- */
 
-// Search users by display name (case-insensitive client-side filter)
+// Look up a user by their exact UID
 async function searchUsers(query) {
-  const endpoint =
-    `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/users?key=${API_KEY}`
-  const res  = await fetch(endpoint)
-  if (!res.ok) return []
-  const json = await res.json()
-  const docs = Array.isArray(json.documents) ? json.documents : []
+  const trimmed = query.trim()
+  if (!trimmed) return []
 
-  return docs
-    .map(doc => ({
-      uid:         doc.fields?.uid?.stringValue         || "",
-      displayName: doc.fields?.displayName?.stringValue || ""
-    }))
-    .filter(u =>
-      u.uid !== MY_UID &&  // exclude yourself
-      u.displayName.toLowerCase().includes(query.toLowerCase())
-    )
+  // Fetch the specific user document by UID
+  const endpoint =
+    `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/users/${trimmed}?key=${API_KEY}`
+  const res = await fetch(endpoint)
+  if (!res.ok) return [] // 404 means no user with that UID
+
+  const doc = await res.json()
+  const uid  = doc.fields?.uid?.stringValue || ""
+  const name = doc.fields?.displayName?.stringValue || ""
+
+  // Don't show yourself
+  if (uid === MY_UID) return []
+
+  return [{ uid, displayName: name }]
 }
 
 /* ---------- FIRESTORE — FRIENDS ---------- */
@@ -230,8 +231,26 @@ async function removeFriend(docName) {
 }
 
 async function sendFriendRequest(toUid, toName) {
+  // Check if a request already exists between these two users in either direction
   const endpoint =
     `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/friendRequests?key=${API_KEY}`
+  const res  = await fetch(endpoint)
+  if (res.ok) {
+    const json = await res.json()
+    const docs = Array.isArray(json.documents) ? json.documents : []
+    const exists = docs.some(doc => {
+      const f    = doc.fields || {}
+      const from = f.fromUid?.stringValue
+      const to   = f.toUid?.stringValue
+      // Check both directions
+      return (from === MY_UID && to === toUid) || (from === toUid && to === MY_UID)
+    })
+    if (exists) {
+      alert("A friend request already exists with this user.")
+      return
+    }
+  }
+
   await fetch(endpoint, {
     method:  "POST",
     headers: { "Content-Type": "application/json" },
@@ -384,7 +403,8 @@ function render(posts) {
           <div class="commentList" id="comments-${pid}"></div>
           ${MY_UID ? `
             <div class="commentInputRow">
-              <input class="commentInput" type="text" placeholder="Add a comment…" data-post="${pid}" />
+              <input class="commentInput" type="text" placeholder="Add a comment…" data-post="${pid}" maxlength="200" />
+              <span class="charCount" data-post="${pid}">200</span>
               <button class="commentSubmit" data-post="${pid}">Post</button>
             </div>
           ` : ""}
@@ -531,6 +551,8 @@ listEl.addEventListener("click", async (e) => {
     const text   = input?.value?.trim()
     if (!text) return
     input.value = ""
+    const counter = listEl.querySelector(`.charCount[data-post="${postId}"]`)
+    if (counter) counter.textContent = "200"
     await submitComment(postId, text)
     loadComments(postId)
     return
@@ -545,8 +567,19 @@ listEl.addEventListener("keydown", async (e) => {
   const text   = input.value.trim()
   if (!text) return
   input.value = ""
+  const counter = listEl.querySelector(`.charCount[data-post="${postId}"]`)
+  if (counter) counter.textContent = "200"
   await submitComment(postId, text)
   loadComments(postId)
+})
+
+// Live character counter for comment inputs
+listEl.addEventListener("input", (e) => {
+  const input = e.target.closest(".commentInput")
+  if (!input) return
+  const postId  = input.dataset.post
+  const counter = listEl.querySelector(`.charCount[data-post="${postId}"]`)
+  if (counter) counter.textContent = 200 - input.value.length
 })
 
 // Pause auto-refresh while typing a comment
@@ -559,6 +592,6 @@ setInterval(async () => {
   await loadFriends()
   load()
   loadRequests()
-}, 10000)
+}, 60000)
 
 init()

@@ -13,7 +13,8 @@
     "activeTab",
     "tabs",
     "scripting",
-    "identity"
+    "identity",
+    "alarms"
   ],
   "oauth2": {
     "client_id": "582613352242-l9f6nuvc3p9l0v2d64djn0qambruivk0.apps.googleusercontent.com",
