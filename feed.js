@@ -2,7 +2,6 @@ const listEl          = document.getElementById("list")
 const statusEl        = document.getElementById("status")
 const refreshBtn      = document.getElementById("refreshBtn")
 const emptyEl         = document.getElementById("emptyState")
-const loginBtn        = document.getElementById("loginBtn")
 const logoutBtn       = document.getElementById("logoutBtn")
 const subtitleEl      = document.querySelector(".subtitle")
 const leftPanel       = document.getElementById("leftPanel")
@@ -44,20 +43,12 @@ function applyAuthUI() {
     refreshBtn.style.display = "none"
     leftPanel.style.display  = "none"
     if (logoutBtn) logoutBtn.style.display = "none"
-    if (loginBtn)  loginBtn.style.display  = "inline-block"
   } else {
     subtitleEl.textContent   = "Your feed"
     refreshBtn.style.display = "inline-block"
     leftPanel.style.display  = "flex"
     if (logoutBtn) logoutBtn.style.display = "inline-block"
-    if (loginBtn)  loginBtn.style.display  = "none"
   }
-}
-
-if (loginBtn) {
-  loginBtn.addEventListener("click", () => {
-    window.open(chrome.runtime.getURL("login.html"), "_blank")
-  })
 }
 
 if (logoutBtn) {
@@ -68,12 +59,11 @@ if (logoutBtn) {
     MY_USER    = null
     MY_UID     = ""
     MY_FRIENDS = []
-    listEl.innerHTML     = ""
+    listEl.innerHTML        = ""
     leftPanel.style.display = "none"
     if (emptyEl) emptyEl.style.display = "none"
     refreshBtn.style.display = "none"
     logoutBtn.style.display  = "none"
-    if (loginBtn) loginBtn.style.display = "inline-block"
     subtitleEl.textContent = "Log in to see your feed"
     statusEl.textContent   = ""
   })
