@@ -1,16 +1,14 @@
 const msgEl    = document.getElementById("msg")
 const loginBtn = document.getElementById("loginBtn")
- 
-// Your OAuth client ID
-const CLIENT_ID = "582613352242-hdrf9s9ovggr1s71edgvkq5k425c76r0.apps.googleusercontent.com"
- 
+
+const CLIENT_ID  = "582613352242-hdrf9s9ovggr1s71edgvkq5k425c76r0.apps.googleusercontent.com"
+const PROJECT_ID = "loess-eecf3"
+const API_KEY    = "AIzaSyD4HpKMkJwAFtIvst2XaEMa3L3oNnjfAoA"
+
 loginBtn.addEventListener("click", () => {
   msgEl.textContent = "Opening Google sign-in…"
   loginBtn.disabled = true
- 
-  // Build the Google OAuth URL manually.
-  // "prompt=select_account" forces Google to always show the account picker,
-  // regardless of which account is signed into Chrome.
+
   const redirectUrl = chrome.identity.getRedirectURL()
   const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth")
   authUrl.searchParams.set("client_id",     CLIENT_ID)
@@ -18,10 +16,7 @@ loginBtn.addEventListener("click", () => {
   authUrl.searchParams.set("redirect_uri",  redirectUrl)
   authUrl.searchParams.set("scope",         "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile")
   authUrl.searchParams.set("prompt",        "select_account")
- 
-  // launchWebAuthFlow opens a proper Google sign-in window.
-  // Unlike getAuthToken, it is not tied to the Chrome profile account,
-  // so users can pick any Google account they want.
+
   chrome.identity.launchWebAuthFlow(
     { url: authUrl.toString(), interactive: true },
     async (responseUrl) => {
@@ -30,37 +25,61 @@ loginBtn.addEventListener("click", () => {
         loginBtn.disabled = false
         return
       }
- 
-      // Google returns the access token in the URL hash fragment
-      // e.g. https://...#access_token=TOKEN&token_type=Bearer&...
+
       const params = new URLSearchParams(new URL(responseUrl).hash.slice(1))
       const token  = params.get("access_token")
- 
+
       if (!token) {
         msgEl.textContent = "Sign-in failed: no token returned"
         loginBtn.disabled = false
         return
       }
- 
+
       try {
-        // Use the token to get the user's profile from Google
         const res  = await fetch(
           "https://www.googleapis.com/oauth2/v3/userinfo",
           { headers: { Authorization: "Bearer " + token } }
         )
         const info = await res.json()
- 
+
         const payload = {
           uid:         info.sub,
           displayName: info.name  || "",
           email:       info.email || ""
         }
- 
+
+        // Save to chrome.storage.local for popup and feed to read
         await chrome.storage.local.set({ losslessUser: payload })
- 
-        msgEl.textContent      = `Logged in as ${payload.displayName}. You can close this tab.`
+
+        // ---------------------------------------------------------------
+        // Write the user's profile to Firestore users collection.
+        // This uses the uid as the document ID (PATCH = create or update).
+        // This is how other users can search for and find this person
+        // by their display name when adding friends.
+        // ---------------------------------------------------------------
+        await fetch(
+          `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/users/${payload.uid}?key=${API_KEY}`,
+          {
+            method:  "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fields: {
+                uid:         { stringValue: payload.uid },
+                displayName: { stringValue: payload.displayName },
+                email:       { stringValue: payload.email }
+              }
+            })
+          }
+        )
+
+        msgEl.textContent      = `Logged in as ${payload.displayName}. Redirecting to feed…`
         loginBtn.style.display = "none"
- 
+
+        // Redirect to the feed page 5 seconds after successful login
+        setTimeout(() => {
+          window.location.href = chrome.runtime.getURL("feed.html")
+        }, 5000)
+
       } catch (err) {
         msgEl.textContent = "Error: " + (err.message || "unknown")
         loginBtn.disabled = false

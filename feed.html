@@ -8,12 +8,184 @@
         margin: 0;
         font-family: Arial, sans-serif;
         background: #f7f7f7;
+        display: flex;
+        justify-content: center;
       }
 
-      .wrap {
-        max-width: 720px;
-        margin: 0 auto;
+      /* ---------- LAYOUT ---------- */
+
+      .layout {
+        display: flex;
+        width: 100%;
+        max-width: 860px;
         padding: 18px;
+        gap: 14px;
+        align-items: flex-start;
+        box-sizing: border-box;
+      }
+
+      /* ---------- LEFT PANEL ---------- */
+
+      .leftPanel {
+        width: 180px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .panelCard {
+        background: white;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      }
+
+      .panelTitle {
+        font-size: 16px;
+        font-weight: 800;
+        color: #4CAF50;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+        opacity: 1;
+      }
+
+      /* Add friend search */
+      .addFriendBtn {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(0,0,0,0.12);
+        background: #f7f7f7;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        text-align: left;
+        color: black;
+      }
+
+      .addFriendBtn:hover { background: #efefef; }
+
+      .searchPanel {
+        display: none;
+        margin-top: 10px;
+      }
+
+      .searchPanel.open { display: block; }
+
+      .friendSearchInput {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(0,0,0,0.15);
+        font-size: 12px;
+        outline: none;
+        font-family: inherit;
+        box-sizing: border-box;
+        margin-bottom: 8px;
+      }
+
+      .friendSearchInput:focus { border-color: rgba(0,0,0,0.3); }
+
+      .searchResults { display: flex; flex-direction: column; gap: 8px; }
+
+      .searchResultItem {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 4px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+      }
+
+      .searchResultItem:last-child { border-bottom: none; }
+
+      .sendRequestBtn {
+        font-size: 11px;
+        padding: 5px 12px;
+        border-radius: 8px;
+        border: none;
+        background: black;
+        color: white;
+        cursor: pointer;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .sendRequestBtn:disabled {
+        background: #e0e0e0;
+        color: #999;
+        cursor: default;
+      }
+
+      /* Friend requests */
+      .requestItem {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+        font-size: 13px;
+        font-weight: 500;
+      }
+
+      .requestItem:last-child { border-bottom: none; }
+
+      .requestActions { display: flex; gap: 6px; }
+
+      .acceptBtn, .declineBtn {
+        flex: 1;
+        padding: 6px;
+        border-radius: 8px;
+        border: none;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .acceptBtn  { background: black; color: white; }
+      .declineBtn { background: #f2f2f2; color: black; }
+
+      /* Friends list */
+      .friendItem {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+      }
+
+      .friendItem:last-child { border-bottom: none; }
+
+      .removeFriendBtn {
+        font-size: 11px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(0,0,0,0.12);
+        background: white;
+        cursor: pointer;
+        color: #aaa;
+        font-weight: 600;
+      }
+
+      .removeFriendBtn:hover { color: red; border-color: rgba(255,0,0,0.3); }
+
+      .emptyPanel {
+        font-size: 12px;
+        opacity: 0.4;
+        text-align: center;
+        padding: 8px 0;
+      }
+
+      /* ---------- MAIN FEED ---------- */
+
+      .main {
+        flex: 1;
+        min-width: 0;
+        max-width: 620px;
       }
 
       .topbar {
@@ -34,7 +206,6 @@
         height: 36px;
         width: auto;
         display: block;
-        margin-left: -40px;
       }
 
       .subtitle {
@@ -42,13 +213,9 @@
         font-weight: 700;
         margin-top: 2px;
         opacity: 0.7;
-        margin-right: -8px;
       }
 
-      .topActions {
-        display: flex;
-        gap: 8px;
-      }
+      .topActions { display: flex; gap: 8px; }
 
       .emptyState {
         background: white;
@@ -60,20 +227,15 @@
       }
 
       /* ---------- POST CARD ---------- */
+
       .card {
         background: white;
         width: 100%;
         border-radius: 16px;
         padding: 14px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
         margin-bottom: 12px;
         box-sizing: border-box;
-      }
-
-      /* Emoji bar hidden by default, shown on card hover */
-      .card:hover .emojiBar {
-        opacity: 1;
-        pointer-events: all;
       }
 
       .topline {
@@ -83,29 +245,12 @@
         margin-bottom: 6px;
       }
 
-      .user {
-        font-size: 12px;
-        font-weight: 700;
-        opacity: 0.85;
-      }
+      .user { font-size: 12px; font-weight: 700; opacity: 0.85; }
+      .time { font-size: 12px; opacity: 0.6; white-space: nowrap; }
 
-      .time {
-        font-size: 12px;
-        opacity: 0.6;
-        white-space: nowrap;
-      }
+      .track { font-size: 14px; font-weight: 800; margin-bottom: 6px; }
 
-      .track {
-        font-size: 14px;
-        font-weight: 800;
-        margin-bottom: 6px;
-      }
-
-      .meta {
-        font-size: 12px;
-        opacity: 0.8;
-        margin-bottom: 10px;
-      }
+      .meta { font-size: 12px; opacity: 0.8; margin-bottom: 10px; }
 
       .link {
         display: inline-block;
@@ -113,7 +258,7 @@
         font-weight: 700;
         text-decoration: none;
         color: black;
-        border: 1px solid rgba(0, 0, 0, 0.12);
+        border: 1px solid rgba(0,0,0,0.12);
         padding: 8px 10px;
         border-radius: 12px;
       }
@@ -128,7 +273,7 @@
       .pill {
         font-size: 11px;
         opacity: 0.7;
-        border: 1px solid rgba(0, 0, 0, 0.12);
+        border: 1px solid rgba(0,0,0,0.12);
         padding: 6px 10px;
         border-radius: 999px;
         white-space: nowrap;
@@ -169,21 +314,9 @@
         margin-bottom: 8px;
       }
 
-      .commentItem {
-        font-size: 12px;
-        line-height: 1.4;
-      }
-
-      .commentAuthor {
-        font-weight: 700;
-        margin-right: 4px;
-      }
-
-      .commentTime {
-        font-size: 11px;
-        opacity: 0.5;
-        margin-left: 6px;
-      }
+      .commentItem { font-size: 12px; line-height: 1.4; }
+      .commentAuthor { font-weight: 700; margin-right: 4px; }
+      .commentTime { font-size: 11px; opacity: 0.5; margin-left: 6px; }
 
       .commentDeleteBtn {
         background: none;
@@ -196,9 +329,7 @@
         vertical-align: middle;
       }
 
-      .commentDeleteBtn:hover {
-        opacity: 1;
-      }
+      .commentDeleteBtn:hover { opacity: 1; }
 
       .commentInputRow {
         display: flex;
@@ -216,9 +347,7 @@
         font-family: inherit;
       }
 
-      .commentInput:focus {
-        border-color: rgba(0,0,0,0.3);
-      }
+      .commentInput:focus { border-color: rgba(0,0,0,0.3); }
 
       .commentSubmit {
         padding: 7px 12px;
@@ -260,25 +389,51 @@
   </head>
 
   <body>
-    <div class="wrap">
-      <div class="topbar">
-        <div class="brandBlock">
-          <img src="losslesslogo.png" alt="Lossless logo" class="logo" />
-          <div class="subtitle">Your feed</div>
+    <div class="layout">
+
+      <!-- MAIN FEED -->
+      <div class="main">
+        <div class="topbar">
+          <div class="brandBlock">
+            <img src="losslesslogo.png" alt="Lossless logo" class="logo" />
+            <div class="subtitle">Your feed</div>
+          </div>
+          <div class="topActions">
+            <button id="refreshBtn">Refresh</button>
+            <button id="logoutBtn">Log out</button>
+          </div>
         </div>
 
-        <div class="topActions">
-          <button id="refreshBtn">Refresh</button>
-          <button id="logoutBtn">Log out</button>
+        <div id="emptyState" class="emptyState" style="display:none;">
+          No posts yet. Add some friends and share a track to get started.
         </div>
+
+        <div id="list"></div>
+        <div id="status"></div>
       </div>
 
-      <div id="emptyState" class="emptyState" style="display:none;">
-        No posts yet. Share a track to get started.
+      <!-- RIGHT PANEL -->
+      <div class="leftPanel" id="leftPanel" style="display:none;">
+
+        <!-- Add Friends -->
+        <div class="panelCard">
+          <div class="panelTitle">Friends</div>
+          <button class="addFriendBtn" id="addFriendBtn">+ Add Friend</button>
+          <div class="searchPanel" id="searchPanel">
+            <input class="friendSearchInput" id="friendSearchInput" type="text" placeholder="Search by name…" />
+            <div class="searchResults" id="searchResults"></div>
+          </div>
+          <div id="friendsList" style="margin-top:10px;"></div>
+        </div>
+
+        <!-- Pending Requests -->
+        <div class="panelCard" id="requestsCard" style="display:none;">
+          <div class="panelTitle">Friend Requests</div>
+          <div id="requestsList"></div>
+        </div>
+
       </div>
 
-      <div id="list"></div>
-      <div id="status"></div>
     </div>
 
     <script src="feed.js"></script>
